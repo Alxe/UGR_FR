@@ -53,13 +53,15 @@ public class HangedManMain {
 			System.out.println("Connection established! Have fun!");
 			
 			try(final Scanner scanner = new Scanner(System.in)) {
+				System.out.printf("Word: %s\n", guessedWord);
+				
 				while(!gameState.isTterminating) {
-					System.out.printf("Word: %s\n", guessedWord);
 					System.out.printf("Guess (character): ");
 					String input = scanner.nextLine();
 					
 					result = client.guess(input);
 					gameState = result.gameState;
+					
 					// Just Display the response
 					System.out.println(result.response);
 				}

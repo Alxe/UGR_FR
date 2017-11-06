@@ -68,24 +68,33 @@ public class HangedManGame {
 		this(objective, DEFAULT_TRIES);
 	}
 	
-	private boolean guess(Character c) {
+	private boolean guess(char c) {
 		// false if `c` was already tried or `objective` doesn't contain `c`
 		// true otherwise
-		return guessed.add(Character.toLowerCase(c)) && objective.toLowerCase().contains(c.toString().toLowerCase());
+		return guessed.add(Character.toLowerCase(c)) && 
+				objective.toLowerCase().contains(Character.toString(Character.toLowerCase(c)));
+	}
+	
+	// TODO finish support for this method
+	@SuppressWarnings("unused")
+	private boolean guess(String s) {
+		return objective.equals(s);
 	}
 	
 	/**
 	 * Game main method
-	 * @param c The character to be guessed
+	 * @param 
 	 * @return
 	 */
-	public State doGuess(Character c) {
+	public State doGuess(char c) {
 		// If game is already over, return said state.
 		if(isGameOver()) {
 			return State.OVER;
 		}
 		
-		if(!guess(c)) {
+		final boolean success = guess(c);
+		
+		if(!success) {
 			// if fail, remove a try.
 			remainingTries -= 1;
 		}
@@ -109,7 +118,7 @@ public class HangedManGame {
 	 * @return true if game has been won
 	 */
 	public boolean isGameWon() {
-		return getGuessedWord().equals(objective);
+		return getMaskedWord().equals(objective);
 	}
 	
 	/**
@@ -140,7 +149,7 @@ public class HangedManGame {
 	 * 
 	 * @return Masked string of the objective
 	 */
-	public String getGuessedWord() {
+	public String getMaskedWord() {
 		StringBuilder sb = new StringBuilder();
 		
 		for(char c : objective.toCharArray()) {
@@ -148,6 +157,14 @@ public class HangedManGame {
 		}
 		
 		return sb.toString();
+	}
+	
+	/**
+	 * 
+	 * @return Objective string
+	 */
+	public String getWord() {
+		return objective;
 	}
 
 	public int getRemainingTries() {

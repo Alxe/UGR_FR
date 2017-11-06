@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -35,27 +36,34 @@ public class TcpServer implements HangedManServer {
 		
 		private void start(OutputStream os) {
 			final String id = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
-			final HangedManGame game = new HangedManGame("MotoBanana", HangedManGame.DEFAULT_TRIES);
+			final HangedManGame game = new HangedManGame("Placeholder");
 			
+			// Introducimos la instancia en el mapa.
 			games.put(id, game);
 			
+			// TODO Definir un sistema de Logging
+			System.out.println("Started session with id " + id);
+			
 			try(PrintWriter out = new PrintWriter(new OutputStreamWriter(os))) {
-				out.printf("STARTED %s %s\n", id, game.getGuessedWord());
-				out.flush();
+				out.printf("STARTED %s %s\n", id, game.getMaskedWord());
 			}
 		}
 		
-		private void guess(OutputStream os, String input) {
-			// TODO This WILL eventually explode!!
-			final String id = input.split(" ")[0];
-			final String guess = input.split(" ")[1];
+		private void guess(OutputStream os, String[] input) {
+			if(input.length != 2) {
+				// TODO malformed request
+			}
 			
-			// TODO This WILL eventually explode too!!
-			HangedManGame game = games.get(id);
+			final String id = input[0];
+			final String guess = input[1];
 			
-			try(PrintWriter out = new PrintWriter(new OutputStreamWriter(os))) {
+			final HangedManGame game = games.get(id);
+			
+			if(game == null) {
+				// TODO invalid game session
+				
+			} else try(PrintWriter out = new PrintWriter(new OutputStreamWriter(os))) {
 				if(game.isGameOver()) {
-					// printf("Game (id=%s) is over", id);
 					out.printf("OVER %s\n", id);
 
 				} else {
@@ -63,19 +71,20 @@ public class TcpServer implements HangedManServer {
 					HangedManGame.State state = game.doGuess(guess.charAt(0));
 					
 					if(state.equals(HangedManGame.State.WIN)) {
-						// printf("Congratulations, you've won! The word was %s", game.getGuessedWord());
-						out.printf("WIN %s\n", game.getGuessedWord());
+						out.printf("WIN %s\n", game.getWord());
 					} else if(state.equals(HangedManGame.State.LOSS)) {
-						// printf("That's too bad! You've lost. You only guessed %s", game.getGuessedWord());
-						out.printf("LOSS %s\n", game.getGuessedWord());
+						out.printf("LOSS %s\n", game.getWord());
 					} else { 
 						// GameState is PLAYING!
-						// printf("Word is: %s (%d remaining tries)", game.getGuessedWord(), game.getRemainingTries());
-						out.printf("PLAYING %s %s\n", game.getGuessedWord(), game.getRemainingTries());
+						out.printf("PLAYING %d %s\n", game.getRemainingTries(), game.getMaskedWord());
 					}
 					
 				}
 			}
+		}
+
+		private void error(OutputStream os, int errorCode) {
+			// TODO fill this method
 		}
 		
 		public void run() {
@@ -89,7 +98,8 @@ public class TcpServer implements HangedManServer {
 					start(connection.getOutputStream());
 					break;
 				case "GUESS":
-					guess(connection.getOutputStream(), String.join(" ", input[1], input[2]));
+					if(input.length != 3) error(connection.getOutputStream(), /* TODO replace errorCode */ 100);
+					else guess(connection.getOutputStream(), Arrays.copyOfRange(input, 1, input.length));
 					break;
 				default:
 					// TODO wrongInput(connection.getOutputStream());
@@ -107,8 +117,8 @@ public class TcpServer implements HangedManServer {
 				// Esperamos una nueva conexión
 				final Socket connection = serverSocket.accept();
 				
-				// Enviamos el socket de la conexión establecida al handler.
-				new ConnectionHandler(connection).run();
+				// Enviamos el socket de la conexión establecida al handler
+				new Thread(new ConnectionHandler(connection)).start();
 				
 			} while(true);
 		} catch (IOException e) {

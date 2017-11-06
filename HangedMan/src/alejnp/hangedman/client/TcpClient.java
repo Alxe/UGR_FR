@@ -80,7 +80,7 @@ public class TcpClient extends HangedManClient {
 				case "PLAYING":
 					// input[1] = guessedWord; input[2] = remainingTries
 					return new HangedManResult(HangedManGame.State.PLAYING, 
-							String.format("Word is: %s (%s remaining tries)\n", input[1], input[2]));
+							String.format("Word is: %2$s (%1$s remaining tries)\n", input[1], input[2]));
 				case "ERROR":
 				default:
 					return new HangedManResult(HangedManGame.State.ERROR,
